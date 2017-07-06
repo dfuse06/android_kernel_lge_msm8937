@@ -321,13 +321,21 @@ static ssize_t rmidev_read(struct file *filp, char __user *buf,
 		retval = -EFAULT;
 		goto unlock;
 	}
+<<<<<<< HEAD
 
 	tmpbuf = kzalloc(count + 1, GFP_KERNEL);
 	if (!tmpbuf) {
 		retval = -ENOMEM;
 		goto unlock;
 	}
+=======
+>>>>>>> LA.UM.5.5.r1-05100-8x96.0
 
+	tmpbuf = kzalloc(count + 1, GFP_KERNEL);
+	if (!tmpbuf) {
+		retval = -ENOMEM;
+		goto unlock;
+	}
 	retval = rmidev->fn_ptr->read(rmidev->rmi4_data,
 			*f_pos,
 			tmpbuf,
@@ -344,7 +352,10 @@ clean_up:
 	kfree(tmpbuf);
 unlock:
 	mutex_unlock(&(dev_data->file_mutex));
+<<<<<<< HEAD
 
+=======
+>>>>>>> LA.UM.5.5.r1-05100-8x96.0
 	return retval;
 }
 

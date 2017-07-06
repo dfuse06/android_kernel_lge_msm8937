@@ -11313,6 +11313,7 @@ static int smbchg_probe(struct spmi_device *spmi)
 		pr_info("won_test AICL disable for no battery scene %d\n", is_battery_present());
 	}
 #endif
+	update_usb_status(chip, is_usb_present(chip), false);
 	dump_regs(chip);
 	create_debugfs_entries(chip);
 

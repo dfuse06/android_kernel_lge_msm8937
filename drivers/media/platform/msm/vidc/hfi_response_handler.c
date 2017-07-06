@@ -112,6 +112,7 @@ static int hfi_process_sess_evt_seq_changed(u32 device_id,
 	u8 *data_ptr;
 	int prop_id;
 	enum msm_vidc_pixel_depth luma_bit_depth, chroma_bit_depth;
+	struct hfi_colour_space *colour_info;
 	/* Initialize pic_struct to Progressive picture as default */
 	event_notify.pic_struct = MSM_VIDC_PIC_STRUCT_PROGRESSIVE;
 
@@ -206,6 +207,18 @@ static int hfi_process_sess_evt_seq_changed(u32 device_id,
 						pic_struct->progressive_only);
 				data_ptr +=
 					sizeof(struct hfi_pic_struct);
+				break;
+			case HFI_PROPERTY_PARAM_VDEC_COLOUR_SPACE:
+				data_ptr = data_ptr + sizeof(u32);
+				colour_info =
+					(struct hfi_colour_space *) data_ptr;
+				event_notify.colour_space =
+					colour_info->colour_space;
+				dprintk(VIDC_DBG,
+					"Colour space value is: %d\n",
+						colour_info->colour_space);
+				data_ptr +=
+					sizeof(struct hfi_colour_space);
 				break;
 			default:
 				dprintk(VIDC_ERR,

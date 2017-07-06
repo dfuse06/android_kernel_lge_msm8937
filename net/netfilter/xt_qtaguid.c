@@ -1620,7 +1620,7 @@ static struct sock *qtaguid_find_sk(const struct sk_buff *skb,
 //			if (sk != skb->sk)
 //				sock_gen_put(sk);
 //below code is blocked by heeyeon.nah@lge.com, END
-      sock_gen_put(sk);
+			sock_gen_put(sk);
 			sk = NULL;
 		}
 	}

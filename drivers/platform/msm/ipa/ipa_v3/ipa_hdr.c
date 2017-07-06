@@ -596,7 +596,7 @@ static int __ipa3_del_hdr_proc_ctx(u32 proc_ctx_hdl,
 	}
 
 	if (release_hdr)
-		__ipa3_del_hdr(entry->hdr->id);
+		__ipa3_del_hdr(entry->hdr->id, false);
 
 	/* move the offset entry to appropriate free list */
 	list_move(&entry->offset_entry->link,
@@ -718,7 +718,7 @@ bail:
  * ipa3_del_hdr_by_user() - Remove the specified headers
  * from SW and optionally commit them to IPA HW
  * @hdls:	[inout] set of headers to delete
- * @by_user:   Operation requested by user?
+ * @by_user:	Operation requested by user?
  *
  * Returns:	0 on success, negative on failure
  *
@@ -759,11 +759,11 @@ bail:
 /**
  * ipa3_del_hdr() - Remove the specified headers from SW and optionally commit them
  * to IPA HW
- * @hdls:  [inout] set of headers to delete
+ * @hdls:	[inout] set of headers to delete
  *
- * Returns:    0 on success, negative on failure
+ * Returns:	0 on success, negative on failure
  *
- * Note:   Should not be called from atomic context
+ * Note:	Should not be called from atomic context
  */
 int ipa3_del_hdr(struct ipa_ioc_del_hdr *hdls)
 {
@@ -819,7 +819,7 @@ bail:
  * Remove the specified processing context headers from SW and
  * optionally commit them to IPA HW.
  * @hdls:	[inout] set of processing context headers to delete
- * @by_user:   Operation requested by user?
+ * @by_user:	Operation requested by user?
  *
  * Returns:	0 on success, negative on failure
  *
@@ -862,11 +862,11 @@ bail:
  * ipa3_del_hdr_proc_ctx() -
  * Remove the specified processing context headers from SW and
  * optionally commit them to IPA HW.
- * @hdls:  [inout] set of processing context headers to delete
+ * @hdls:	[inout] set of processing context headers to delete
  *
- * Returns:    0 on success, negative on failure
+ * Returns:	0 on success, negative on failure
  *
- * Note:   Should not be called from atomic context
+ * Note:	Should not be called from atomic context
  */
 int ipa3_del_hdr_proc_ctx(struct ipa_ioc_del_hdr_proc_ctx *hdls)
 {
