@@ -2438,7 +2438,7 @@ static int mmc_test_awake_ext_csd(struct mmc_host *host)
 	return err;
 }
 
-static int _mmc_suspend(struct mmc_host *host, bool is_suspend, bool is_runtime_pm)
+static int _mmc_suspend(struct mmc_host *host, bool is_suspend)
 {
 	int err = 0;
 
