@@ -3083,15 +3083,6 @@ int msm_isp_cfg_axi_stream(struct vfe_device *vfe_dev, void *arg)
 		pr_err("%s: Invalid stream state\n", __func__);
 		return rc;
 	}
-
-	if (axi_data->num_active_stream == 0 || axi_data->need_wm_reconfig) {
-		/*Configure UB*/
-		vfe_dev->hw_info->vfe_ops.axi_ops.cfg_ub(vfe_dev);
-		/*when start reset overflow state*/
-		atomic_set(&vfe_dev->error_info.overflow_state,
-			NO_OVERFLOW);
-	}
-
 	msm_isp_get_camif_update_state_and_halt(vfe_dev, stream_cfg_cmd,
 		&camif_update, &halt);
 	if (camif_update == DISABLE_CAMIF)
