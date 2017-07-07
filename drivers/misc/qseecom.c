@@ -1804,7 +1804,7 @@ static int __qseecom_process_incomplete_cmd(struct qseecom_dev_handle *data,
 
 		ret = qseecom_scm_call(SCM_SVC_TZSCHEDULER, 1,
 					cmd_buf, cmd_len, resp, sizeof(*resp));
-		ptr_svc->listener_in_use = false;d
+		ptr_svc->listener_in_use = false;
 		__qseecom_clean_listener_sglistinfo(ptr_svc);
 		if (ret) {
 			pr_err("scm_call() failed with err: %d (app_id = %d)\n",
