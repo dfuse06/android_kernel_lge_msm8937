@@ -20,8 +20,8 @@ struct lge_mdss_dsi_ctrl_pdata {
 	int num_gpios;
 	struct lge_gpio_entry *gpio_array;
 
-	/* esc_clk_rate */
-	int esc_clk_rate;
+	/* xo_clk_rate */
+	int xo_clk_rate;
 
 	/* delay */
 	int pre_on_cmds_delay;

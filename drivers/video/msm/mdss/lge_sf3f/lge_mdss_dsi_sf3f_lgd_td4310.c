@@ -186,30 +186,31 @@ int sf3f_lgd_td4310_mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enab
 				}
 			}
 
-			if (lge_mdss_dsi_panel_power_seq_all()) {
+			if (lge_get_display_power_ctrl()) {
 				pr_info("%s: turn panel power on\n", __func__);
+
+				gpio_set_value((ctrl_pdata->rst_gpio), 0);
+				mdelay(10);
 
 				lge_extra_gpio_set_value(ctrl_pdata, "iovcc", 1);
 				usleep_range(10000, 10000);
 
-				touch_notifier_call_chain(NOTIFY_TOUCH_RESET, NULL);
-				usleep_range(10000, 10000);
-
 				gpio_set_value((ctrl_pdata->rst_gpio), 1);
-				mdelay(150);
+				mdelay(200);
 
 				lge_extra_gpio_set_value(ctrl_pdata, "dsv_ena", 1);
 				usleep_range(10000, 10000);
 			} else{
 				pr_info("%s: skip panel power control\n", __func__);
 
-				touch_notifier_call_chain(NOTIFY_TOUCH_RESET, NULL);
+				if (touch_notifier_call_chain(NOTIFY_TOUCH_RESET, NULL))
+					pr_err("[Display] Failt to send notify to touch\n");
 
-				for (i = 0; i < pdata->panel_info.rst_seq_len; ++i) {
-					gpio_set_value((ctrl_pdata->rst_gpio), pdata->panel_info.rst_seq[i]);
+			for (i = 0; i < pdata->panel_info.rst_seq_len; ++i) {
+				gpio_set_value((ctrl_pdata->rst_gpio), pdata->panel_info.rst_seq[i]);
 
-					if (pdata->panel_info.rst_seq[++i])
-						usleep_range(pinfo->rst_seq[i] * 1000, pinfo->rst_seq[i] * 1000);
+				if (pdata->panel_info.rst_seq[++i])
+					usleep_range(pinfo->rst_seq[i] * 1000, pinfo->rst_seq[i] * 1000);
 				}
 			}
 
@@ -224,32 +225,21 @@ int sf3f_lgd_td4310_mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enab
 			ctrl_pdata->ctrl_state &= ~CTRL_STATE_PANEL_INIT;
 			pr_debug("%s: Reset panel done\n", __func__);
 		}
-
-		lge_set_panel_recovery_flag(0);
 	} else {
 #if IS_ENABLED(CONFIG_LGE_DISPLAY_SM5107_DSV)
 		ext_dsv_mode_change(MODE_KNOCKON);  //DSV HIZ KNOCK_ON mode
 #endif
-		if (lge_mdss_dsi_panel_power_seq_all()) {
+		if (lge_get_display_power_ctrl()) {
 			pr_info("%s: turn panel power off\n", __func__);
-
-			touch_notifier_call_chain(NOTIFY_TOUCH_RESET, NULL);
-			usleep_range(10000, 10000);
 
 			pr_info("%s: set panel reset low\n", __func__);
 			gpio_set_value((ctrl_pdata->rst_gpio), 0);
-			usleep_range(10000, 10000);
-
-#if IS_ENABLED(CONFIG_LGE_DISPLAY_SM5107_DSV)
-			ext_dsv_mode_change(POWER_OFF);
-			usleep_range(3000, 3000);
-#endif
+			mdelay(5);
 
 			lge_extra_gpio_set_value(ctrl_pdata, "dsv_ena", 0); //DSV low
 			usleep_range(10000, 10000);
 
 			lge_extra_gpio_set_value(ctrl_pdata, "iovcc", 0);   //iovcc low
-			usleep_range(10000, 10000);
 		}
 
 		lge_extra_gpio_free(ctrl_pdata, "dsv_ena");
@@ -296,17 +286,3 @@ void  sf3f_lgd_td4310_mdss_dsi_ctrl_shutdown(struct platform_device *pdev)
 
 }
 #endif
-
-static int panel_recovery_flag = 0;
-int lge_get_panel_recovery_flag()
-{
-	pr_info("%s: flag=%d", __func__, panel_recovery_flag);
-	return panel_recovery_flag;
-}
-
-
-void lge_set_panel_recovery_flag(int flag)
-{
-	pr_info("%s: flag=%d", __func__, flag);
-	panel_recovery_flag = flag;
-}

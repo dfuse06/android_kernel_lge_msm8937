@@ -266,12 +266,6 @@ config LGE_DISPLAY_TF8_INX_NT51021
 	---help---
 	It provides support for LGE_DISPLAY_TF8_INX_NT51021 panel
 
-config LGE_DISPLAY_MH
-	depends on LGE_DISPLAY_COMMON
-	bool "Use LGE DISPLAY MH"
-	---help---
-    It provides support for MH panel
-
 config LGE_DISPLAY_BL_USE_BLMAP
 	depends on FB_MSM_MDSS
 	bool "Use LGE BLMAP"
@@ -284,13 +278,6 @@ config LGE_DISPLAY_READER_MODE
 	bool "LGE reader mode"
 	---help---
 	The reader mode provides support to change color temperature
-	by sending proper cmds to panel.
-
-config LGE_DISPLAY_DAYLIGHT_MODE
-	depends on FB_MSM_MDSS
-	bool "LGE daylight mode"
-	---help---
-	The daylight mode provides support to improve outdoor visibility
 	by sending proper cmds to panel.
 
 config LGE_DISPLAY_RECOVERY_ESD
@@ -354,3 +341,8 @@ config LGE_DISPLAY_PRE_ACTIVE_AREA_DELAY
 	help
 	if you say yes here you get support for pre active area delay
 
+config LGE_INTERVAL_DFPS
+	bool "Interval Based DFPS scheme"
+	default n
+	help
+	This feature provides Interval Based DFPS scheme.

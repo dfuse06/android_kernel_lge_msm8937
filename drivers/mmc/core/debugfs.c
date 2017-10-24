@@ -32,26 +32,6 @@ module_param(fail_request, charp, 0);
 #endif /* CONFIG_FAIL_MMC_REQUEST */
 
 /* The debugfs functions are optimized away when CONFIG_DEBUG_FS isn't set. */
-static int mmc_ring_buffer_show(struct seq_file *s, void *data)
-{
-	struct mmc_host *mmc = s->private;
-
-	mmc_dump_trace_buffer(mmc, s);
-	return 0;
-}
-
-static int mmc_ring_buffer_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, mmc_ring_buffer_show, inode->i_private);
-}
-
-static const struct file_operations mmc_ring_buffer_fops = {
-	.open		= mmc_ring_buffer_open,
-	.read		= seq_read,
-	.llseek		= seq_lseek,
-	.release	= single_release,
-};
-
 static int mmc_ios_show(struct seq_file *s, void *data)
 {
 	static const char *vdd_str[] = {
@@ -363,12 +343,6 @@ void mmc_add_host_debugfs(struct mmc_host *host)
 		&host->cmdq_thist_enabled))
 		goto err_node;
 
-#ifdef CONFIG_MMC_RING_BUFFER
-	if (!debugfs_create_file("ring_buffer", S_IRUSR,
-				root, host, &mmc_ring_buffer_fops))
-		goto err_node;
-#endif
-
 #ifdef CONFIG_MMC_CLKGATE
 	if (!debugfs_create_u32("clk_delay", (S_IRUSR | S_IWUSR),
 				root, &host->clk_delay))
@@ -456,7 +430,7 @@ static int mmc_ext_csd_open(struct inode *inode, struct file *filp)
 	int err;
 	const char *str;
 	char *buf_for_health_report;
-	char *buf_for_firmware_version;
+	char *buf_for_firmwware_version;
 	ssize_t output = 0;
 	int cnt;
 #else
@@ -559,8 +533,8 @@ static int mmc_ext_csd_open(struct inode *inode, struct file *filp)
 			buf_for_health_report = kmalloc(66, GFP_KERNEL);
 			if (!buf_for_health_report)
 			return -ENOMEM;
-			buf_for_firmware_version = kmalloc(18, GFP_KERNEL);
-			if (!buf_for_firmware_version)
+			buf_for_firmwware_version = kmalloc(18, GFP_KERNEL);
+			if (!buf_for_firmwware_version)
 			return -ENOMEM;
 			seq_printf(s, "[493] Supported modes, supported_modes: 0x%02x\n", ext_csd[493]);
 			seq_printf(s, "[492] FFU features, FFU_FEATURES: 0x%02x\n", ext_csd[492]);
@@ -584,10 +558,10 @@ static int mmc_ext_csd_open(struct inode *inode, struct file *filp)
 			seq_printf(s, "[263:262] Device version, device_version: 0x%02x\n", (ext_csd[262] << 0) | (ext_csd[263] << 8));
 			output=0;
 			for (cnt = 261 ; cnt >= 254 ; cnt--)
-				output += snprintf(buf_for_firmware_version + output, 3, "%02x", ext_csd[cnt]);
-			output += snprintf(buf_for_firmware_version + output, 2, "\n");
-			seq_printf(s, "[261:254] Firmware version, firmware_version: %s", buf_for_firmware_version);
-			kfree(buf_for_firmware_version);
+				output += snprintf(buf_for_firmwware_version + output, 3, "%02x", ext_csd[cnt]);
+			output += snprintf(buf_for_firmwware_version + output, 2, "\n");
+			seq_printf(s, "[261:254] Firmware version, firmwware_version: %s", buf_for_firmwware_version);
+			kfree(buf_for_firmwware_version);
 			seq_printf(s, "[253] Power class for 200MHz, DDR at VCC=3.6V, pwr_cl_ddr_200_360: 0x%02x\n", ext_csd[253]);
 		}
 		seq_printf(s, "[252:249] Cache size, cache_size %d KiB\n", (ext_csd[249] << 0) |
@@ -725,9 +699,6 @@ static int mmc_ext_csd_open(struct inode *inode, struct file *filp)
 		seq_printf(s, "[21:18] Max Pre Loading Data Size, MAX_PRE_LOADING_DATA_SIZE: 0x%08x\n", (ext_csd[18] << 0) | (ext_csd[19] << 8) | (ext_csd[20] << 16) | (ext_csd[21] << 24));
 		seq_printf(s, "[17] Product State Awareness Enablement, PRODUCT_STATE_AWARENESS_ENABLEMENT: 0x%02x\n", ext_csd[17]);
 		seq_printf(s, "[16] Secure Removal Type, SECURE_REMOVAL_TYPE: 0x%02x\n", ext_csd[16]);
-	}
-	if (ext_csd_rev >= 8) {
-		seq_printf(s, "[15] The host enable command queuing mechanism if supported by the device, CMDQ_MODE_EN: 0x%02x\n", ext_csd[15]);
 	}
 #endif
 out_free:

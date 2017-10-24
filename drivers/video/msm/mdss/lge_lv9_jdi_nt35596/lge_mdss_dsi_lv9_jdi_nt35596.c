@@ -12,40 +12,20 @@ extern int mdss_dsi_pinctrl_set_state(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
 					bool active);
 #endif
 
-#define IE_MONO_BIT      0
-#define IE_DAYLIGHT_BIT  1
-
-#define IE_MONO_ENABLE_IDX     1
-#define IE_DAYLIGHT_ENABLE_IDX 2
-#define VALUE_POS 1
-
-static u32 ie_status = 0;
-
 #if IS_ENABLED(CONFIG_LGE_DISPLAY_READER_MODE)
 static struct dsi_panel_cmds normal_mode_initial_gamma_cmds;
 static struct dsi_panel_cmds reader_mode_initial_step1_cmds;
 static struct dsi_panel_cmds reader_mode_initial_step2_cmds;
 static struct dsi_panel_cmds reader_mode_initial_step3_cmds;
-static struct dsi_panel_cmds reader_mode_initial_ie_enable_cmds;
+static struct dsi_panel_cmds reader_mode_initial_mono_enable_cmds;
 static struct dsi_panel_cmds reader_mode_step1_cmds;
 static struct dsi_panel_cmds reader_mode_step2_cmds;
 static struct dsi_panel_cmds reader_mode_step3_cmds;
 static struct dsi_panel_cmds reader_mode_off_cmds;
-static struct dsi_panel_cmds reader_mode_ie_enable_cmds;
-static struct dsi_panel_cmds reader_mode_ie_disable_cmds;
+static struct dsi_panel_cmds reader_mode_mono_enable_cmds;
+static struct dsi_panel_cmds reader_mode_mono_disable_cmds;
 #endif
 
-#if defined(CONFIG_LGE_DISPLAY_DAYLIGHT_MODE)
-enum DAYLIGHT_MODE {
-	DAYLIGHT_MODE_OFF = 0,
-	DAYLIGHT_MODE_LOW,
-	DAYLIGHT_MODE_MID,
-	DAYLIGHT_MODE_HIGH,
-	DAYLIGHT_MODE_MAX,
-};
-#endif
-
-extern int lge_mdss_fb_get_shutdown_state(void);
 extern void mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl, struct dsi_panel_cmds *pcmds, u32 flags);
 extern int mdss_dsi_parse_dcs_cmds(struct device_node *np, struct dsi_panel_cmds *pcmds, char *cmd_key, char *link_key);
 
@@ -225,13 +205,10 @@ int mdss_dsi_panel_power_off(struct mdss_panel_data *pdata)
 
 	pr_info("%s: (override: lv9)\n", __func__);
 
-	if(!lge_mdss_fb_get_shutdown_state())
-	{
-		ret = mdss_dsi_panel_reset(pdata, 0);
-		if (ret) {
-			pr_warn("%s: Panel reset failed. rc=%d\n", __func__, ret);
-			ret = 0;
-		}
+	ret = mdss_dsi_panel_reset(pdata, 0);
+	if (ret) {
+		pr_warn("%s: Panel reset failed. rc=%d\n", __func__, ret);
+		ret = 0;
 	}
 
 	if (mdss_dsi_pinctrl_set_state(ctrl_pdata, false))
@@ -314,8 +291,10 @@ int lge_mdss_dsi_parse_reader_mode_cmds(struct device_node *np, struct mdss_dsi_
 		"qcom,panel-reader-mode-initial-step2-command", "qcom,mdss-dsi-on-command-state");
 	mdss_dsi_parse_dcs_cmds(np, &reader_mode_initial_step3_cmds,
 		"qcom,panel-reader-mode-initial-step3-command", "qcom,mdss-dsi-on-command-state");
-	mdss_dsi_parse_dcs_cmds(np, &reader_mode_initial_ie_enable_cmds,
-		"qcom,panel-ie-enable-command", "qcom,mdss-dsi-on-command-state");
+
+	mdss_dsi_parse_dcs_cmds(np, &reader_mode_initial_mono_enable_cmds,
+		"qcom,panel-reader-mode-mono-enable-command", "qcom,mdss-dsi-on-command-state");
+
 	mdss_dsi_parse_dcs_cmds(np, &reader_mode_step1_cmds,
 		"qcom,panel-reader-mode-step1-command", "qcom,mdss-dsi-reader-mode-command-state");
 	mdss_dsi_parse_dcs_cmds(np, &reader_mode_step2_cmds,
@@ -324,31 +303,17 @@ int lge_mdss_dsi_parse_reader_mode_cmds(struct device_node *np, struct mdss_dsi_
 		"qcom,panel-reader-mode-step3-command", "qcom,mdss-dsi-reader-mode-command-state");
 	mdss_dsi_parse_dcs_cmds(np, &reader_mode_off_cmds,
 		"qcom,panel-reader-mode-off-command", "qcom,mdss-dsi-reader-mode-command-state");
-	mdss_dsi_parse_dcs_cmds(np, &reader_mode_ie_enable_cmds,
-		"qcom,panel-ie-enable-command", "qcom,mdss-dsi-reader-mode-command-state");
-	mdss_dsi_parse_dcs_cmds(np, &reader_mode_ie_disable_cmds,
-		"qcom,panel-ie-disable-command", "qcom,mdss-dsi-reader-mode-command-state");
+	mdss_dsi_parse_dcs_cmds(np, &reader_mode_mono_enable_cmds,
+		"qcom,panel-reader-mode-mono-enable-command", "qcom,mdss-dsi-reader-mode-command-state");
+	mdss_dsi_parse_dcs_cmds(np, &reader_mode_mono_disable_cmds,
+		"qcom,panel-reader-mode-mono-disable-command", "qcom,mdss-dsi-reader-mode-command-state");
 
 	return 0;
-}
-
-static void lge_mdss_dsi_send_ie_cmds(struct mdss_dsi_ctrl_pdata *ctrl)
-{
-	pr_debug("%s: ie_status : 0x%x\n", __func__, ie_status);
-	if(!(ie_status & 0x03)) {  // DAYLIGHT OFF, MONO OFF
-		mdss_dsi_panel_cmds_send(ctrl, &reader_mode_ie_disable_cmds, CMD_REQ_COMMIT);
-	}
-	else {
-		reader_mode_ie_enable_cmds.cmds[IE_MONO_ENABLE_IDX].payload[VALUE_POS] = (ie_status & (1 <<IE_MONO_BIT))?1:0;
-		reader_mode_ie_enable_cmds.cmds[IE_DAYLIGHT_ENABLE_IDX].payload[VALUE_POS] = (ie_status & (1 << IE_DAYLIGHT_BIT))?1:0;
-		mdss_dsi_panel_cmds_send(ctrl, &reader_mode_ie_enable_cmds, CMD_REQ_COMMIT);
-	}
 }
 
 int lge_mdss_dsi_panel_send_on_cmds(struct mdss_dsi_ctrl_pdata *ctrl, struct dsi_panel_cmds *default_on_cmds, int cur_mode)
 {
 	pr_info("%s: reader_mode (%d).\n", __func__, cur_mode);
-	ie_status &= ~BIT(IE_DAYLIGHT_BIT);  // daylight bit clear for display on
 
 	switch(cur_mode)
 	{
@@ -386,10 +351,11 @@ int lge_mdss_dsi_panel_send_on_cmds(struct mdss_dsi_ctrl_pdata *ctrl, struct dsi
 			}
 			if (default_on_cmds->cmd_cnt)
 				mdss_dsi_panel_cmds_send(ctrl, default_on_cmds, CMD_REQ_COMMIT);
-			if (reader_mode_initial_ie_enable_cmds.cmd_cnt) {
-				pr_info("%s: reader_mode_initial_ie_enable_cmds: cnt = %d \n",
-					__func__, reader_mode_initial_ie_enable_cmds.cmd_cnt);
-				mdss_dsi_panel_cmds_send(ctrl, &reader_mode_initial_ie_enable_cmds, CMD_REQ_COMMIT);
+
+			if (reader_mode_initial_mono_enable_cmds.cmd_cnt) {
+				pr_info("%s: reader_mode_mono_enable_cmds: cnt = %d \n",
+					__func__, reader_mode_initial_mono_enable_cmds.cmd_cnt);
+				mdss_dsi_panel_cmds_send(ctrl, &reader_mode_initial_mono_enable_cmds, CMD_REQ_COMMIT);
 			}
 			break;
 		case READER_MODE_OFF:
@@ -426,7 +392,7 @@ bool lge_change_reader_mode(struct mdss_dsi_ctrl_pdata *ctrl, int old_mode, int 
 				}
 			    break;
 			case READER_MODE_MONO:
-				if (reader_mode_ie_disable_cmds.cmd_cnt || reader_mode_off_cmds.cmd_cnt) {
+				if (reader_mode_mono_disable_cmds.cmd_cnt || reader_mode_off_cmds.cmd_cnt) {
 					mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
 				}
 				if (reader_mode_off_cmds.cmd_cnt) {
@@ -434,9 +400,12 @@ bool lge_change_reader_mode(struct mdss_dsi_ctrl_pdata *ctrl, int old_mode, int 
 						__func__, reader_mode_off_cmds.cmd_cnt);
 					mdss_dsi_panel_cmds_send(ctrl, &reader_mode_off_cmds, CMD_REQ_COMMIT);
 				}
-				ie_status &= ~BIT(IE_MONO_BIT);  // monochrome bit clear
-				lge_mdss_dsi_send_ie_cmds(ctrl);
-				if (reader_mode_ie_disable_cmds.cmd_cnt || reader_mode_off_cmds.cmd_cnt) {
+				if (reader_mode_mono_disable_cmds.cmd_cnt) {
+					pr_info("%s: sending MONO OFF commands: cnt = %d\n",
+						__func__, reader_mode_mono_disable_cmds.cmd_cnt);
+					mdss_dsi_panel_cmds_send(ctrl, &reader_mode_mono_disable_cmds, CMD_REQ_COMMIT);
+				}
+				if (reader_mode_mono_disable_cmds.cmd_cnt || reader_mode_off_cmds.cmd_cnt) {
 					mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
 				}
 				break;
@@ -486,8 +455,11 @@ bool lge_change_reader_mode(struct mdss_dsi_ctrl_pdata *ctrl, int old_mode, int 
 								__func__, reader_mode_step2_cmds.cmd_cnt);
 							mdss_dsi_panel_cmds_send(ctrl, &reader_mode_step2_cmds, CMD_REQ_COMMIT);
 						}
-						ie_status |= BIT(IE_MONO_BIT);  // monochrome bit set
-						lge_mdss_dsi_send_ie_cmds(ctrl);
+						if (reader_mode_initial_mono_enable_cmds.cmd_cnt) {
+							pr_info("%s: reader_mode_mono_enable_cmds: cnt = %d \n",
+								__func__, reader_mode_initial_mono_enable_cmds.cmd_cnt);
+							mdss_dsi_panel_cmds_send(ctrl, &reader_mode_initial_mono_enable_cmds, CMD_REQ_COMMIT);
+						}
 						break;
 					default:
 						pr_err("%s: Input Invalid parameter: %d \n", __func__, new_mode);
@@ -498,8 +470,11 @@ bool lge_change_reader_mode(struct mdss_dsi_ctrl_pdata *ctrl, int old_mode, int 
 			case READER_MODE_MONO:
 				mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
 				if (new_mode != READER_MODE_MONO) {
-					ie_status &= ~BIT(IE_MONO_BIT);  // monochrome bit clear
-					lge_mdss_dsi_send_ie_cmds(ctrl);
+					if (reader_mode_mono_disable_cmds.cmd_cnt) {
+						pr_err("%s: sending reader MONO mode OFF commands: FIRST cnt : %d \n",
+							__func__, reader_mode_mono_disable_cmds.cmd_cnt);
+						mdss_dsi_panel_cmds_send(ctrl, &reader_mode_mono_disable_cmds, CMD_REQ_COMMIT);
+					}
 				}
 				switch(new_mode)
 				{
@@ -569,28 +544,5 @@ void mdss_dsi_ctrl_shutdown(struct platform_device *pdev)
 	pr_info("%s: turn panel shutdown\n", __func__);
 
 	return;
-}
-#endif
-
-#if defined(CONFIG_LGE_DISPLAY_DAYLIGHT_MODE)
-int lge_mdss_dsi_set_daylight_mode(struct mdss_dsi_ctrl_pdata *ctrl, int mode)
-{
-	pr_info("%s: daylight mode : %d\n", __func__, mode);
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
-	switch(mode)
-	{
-		case DAYLIGHT_MODE_OFF :
-			ie_status &= ~BIT(IE_DAYLIGHT_BIT);  // daylight bit clear
-			lge_mdss_dsi_send_ie_cmds(ctrl);
-			break;
-		case DAYLIGHT_MODE_HIGH :
-			ie_status |= BIT(IE_DAYLIGHT_BIT);  // daylight bit set
-			lge_mdss_dsi_send_ie_cmds(ctrl);
-			break;
-		default :
-			break;
-	}
-	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
-	return 0;
 }
 #endif

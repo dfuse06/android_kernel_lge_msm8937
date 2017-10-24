@@ -34,6 +34,15 @@ config LGE_MMC_RESET_IF_HANG
     help
         Reset eMMC if eMMC is unaccessible.
         continously error on cache flush or mmc restart cmd.
+config LGE_MMC_SPECIAL_SDR104
+        bool "SPECICAL SRD104 SDCARD need wating time for initialization (EXPERIMENTAL)"
+	default n
+	help
+          IF you say Y here, MMC driver will send status command after
+	  SDCARD initialization. If device is recieved sucess response,
+	  will stop sending status command and then SDR104 card is well recognized.
+	  It problem is associated with tunning process of mmc card.
+	  if you are experiencing issues with SD detection.
 
 config LGE_MMC_DYNAMIC_LOG
     bool "MMC debugging - enable logs through adb"

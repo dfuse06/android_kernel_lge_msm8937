@@ -21,19 +21,16 @@
 #include "mdss_mdp.h"
 
 #define MIN_INTERVAL (USEC_PER_SEC/60)
-#define MAX_INTERVAL (USEC_PER_SEC/1)
-#define DEFAULT_WSIZE (4)
 
 struct lge_interval_dfps {
 	u32 fps;
-	u32 *iwin;
+	u32 *interval_w;
+	u32 pre_ts;
+	u32 cur_ts;
 	u32 interval;
+	u32 interval_avg;
 	u32 upthresh;
 	u32 downthresh;
-	u32 wavg;
-	u32 wsum;
-	ktime_t pre_ts;
-	ktime_t cur_ts;
 	int w_idx;
 	int w_sz;
 	int enable;
@@ -49,8 +46,7 @@ struct lge_interval_dfps {
 };
 
 struct lge_interval_dfps *lge_get_idfps_data(void);
-int lge_dfps_interval_notify(ktime_t cur_us);
-int lge_dfps_input_notify(void);
+int lge_dfps_interval_notify(u32 cur_us);
 ssize_t dfps_show(struct device *dev,
 		  struct device_attribute *attr, char *buf);
 ssize_t dfps_store(struct device *dev,

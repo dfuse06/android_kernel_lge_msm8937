@@ -35,6 +35,8 @@
 
 #if IS_ENABLED(CONFIG_LGE_DISPLAY_ESD_NOT_CHECK_WITH_FACTORY_CABLE)
 #include <soc/qcom/lge/board_lge.h>
+extern bool lge_get_disable_esd_absent_bettery(void);
+
 #endif
 
 #if IS_ENABLED(CONFIG_LGE_DISPLAY_EXTERNAL_DSV)
@@ -1170,58 +1172,6 @@ void mdss_dsi_panel_dsc_pps_send(struct mdss_dsi_ctrl_pdata *ctrl,
 	mdss_dsi_panel_cmds_send(ctrl, &pcmds, CMD_REQ_COMMIT);
 }
 
-static int mdss_dsi_parse_hdr_settings(struct device_node *np,
-		struct mdss_panel_info *pinfo)
-{
-	int rc = 0;
-	struct mdss_panel_hdr_properties *hdr_prop;
-
-	if (!np) {
-		pr_err("%s: device node pointer is NULL\n", __func__);
-		return -EINVAL;
-	}
-
-	if (!pinfo) {
-		pr_err("%s: panel info is NULL\n", __func__);
-		return -EINVAL;
-	}
-
-	hdr_prop = &pinfo->hdr_properties;
-	hdr_prop->hdr_enabled = of_property_read_bool(np,
-		"qcom,mdss-dsi-panel-hdr-enabled");
-
-	if (hdr_prop->hdr_enabled) {
-		rc = of_property_read_u32_array(np,
-				"qcom,mdss-dsi-panel-hdr-color-primaries",
-				hdr_prop->display_primaries,
-				DISPLAY_PRIMARIES_COUNT);
-		if (rc) {
-			pr_info("%s:%d, Unable to read color primaries,rc:%u",
-					__func__, __LINE__,
-					hdr_prop->hdr_enabled = false);
-		}
-
-		rc = of_property_read_u32(np,
-			"qcom,mdss-dsi-panel-peak-brightness",
-			&(hdr_prop->peak_brightness));
-		if (rc) {
-			pr_info("%s:%d, Unable to read hdr brightness, rc:%u",
-				__func__, __LINE__, rc);
-			hdr_prop->hdr_enabled = false;
-		}
-
-		rc = of_property_read_u32(np,
-			"qcom,mdss-dsi-panel-blackness-level",
-			&(hdr_prop->blackness_level));
-		if (rc) {
-			pr_info("%s:%d, Unable to read hdr brightness, rc:%u",
-				__func__, __LINE__, rc);
-			hdr_prop->hdr_enabled = false;
-		}
-	}
-	return 0;
-}
-
 static int mdss_dsi_parse_dsc_version(struct device_node *np,
 		struct mdss_panel_timing *timing)
 {
@@ -1794,8 +1744,7 @@ static void mdss_dsi_parse_esd_params(struct device_node *np,
 	pinfo->esd_check_enabled = of_property_read_bool(np,
 		"qcom,esd-check-enabled");
 #if IS_ENABLED(CONFIG_LGE_DISPLAY_ESD_NOT_CHECK_WITH_FACTORY_CABLE)
-	if((factory_cable() && !lge_get_disable_esd_absent_bettery()) ||
-				!lge_get_panel_status_on_boot() || lge_get_mfts_mode()) {
+	if(factory_cable() && !lge_get_disable_esd_absent_bettery()) {
 		pinfo->esd_check_enabled = false;
 	}
 	pr_info("%s : esd_check is %d\n",__func__,pinfo->esd_check_enabled);
@@ -2626,9 +2575,6 @@ static int mdss_panel_parse_dt(struct device_node *np,
 	rc = mdss_panel_parse_display_timings(np, &ctrl_pdata->panel_data);
 	if (rc)
 		return rc;
-	rc = mdss_dsi_parse_hdr_settings(np, pinfo);
-	if (rc)
-		return rc;
 
 	pinfo->mipi.rx_eot_ignore = of_property_read_bool(np,
 		"qcom,mdss-dsi-rx-eot-ignore");
@@ -2762,12 +2708,6 @@ int mdss_dsi_panel_init(struct device_node *node,
 		pr_info("%s: Panel Name = %s\n", __func__, panel_name);
 		strlcpy(&pinfo->panel_name[0], panel_name, MDSS_MAX_PANEL_LEN);
 	}
-
-#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
-	/* initialization for panel param before dtsi parsing */
-	ctrl_pdata->lge_extra.esc_clk_rate = 0;
-#endif
-
 	rc = mdss_panel_parse_dt(node, ctrl_pdata);
 	if (rc) {
 		pr_err("%s:%d panel dt parse failed\n", __func__, __LINE__);

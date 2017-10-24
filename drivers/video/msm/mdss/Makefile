@@ -83,13 +83,14 @@ endif
 ifeq ($(CONFIG_LGE_DISPLAY_SF3_LGD_TD4100),y)
 	mdss-dsi-objs += lge_sf3_lgd_td4100/lge_mdss_dsi_sf3_lgd_td4100.o
 endif
+ifneq ($(filter y, &(CONFIG_LGE_DISPLAY_SF3F_LGD_TD4310) $(CONFIG_LGE_DISPLAY_SF3F_LGD_SW49105)), )
+mdss-dsi-objs += lge_sf3f/lge_mdss_dsi_sf3f.o
+endif
 ifeq ($(CONFIG_LGE_DISPLAY_SF3F_LGD_TD4310),y)
 	mdss-dsi-objs += lge_sf3f/lge_mdss_dsi_sf3f_lgd_td4310.o
-	mdss-dsi-objs += lge_sf3f/lge_mdss_dsi_sf3f.o
 endif
 ifeq ($(CONFIG_LGE_DISPLAY_SF3F_LGD_SW49105),y)
 	mdss-dsi-objs += lge_sf3f/lge_mdss_dsi_sf3f_lgd_sw49105.o
-	mdss-dsi-objs += lge_sf3f/lge_mdss_dsi_sf3f.o
 endif
 ifeq ($(CONFIG_LGE_DISPLAY_MFTS),y)
 mdss-dsi-objs += lge/mfts_mode.o
@@ -116,9 +117,7 @@ endif
 ifeq ($(CONFIG_LGE_DISPLAY_TF8_INX_NT51021),y)
 mdss-dsi-objs += lge_tf8/lge_mdss_dsi_tf8.o
 endif
-ifeq ($(CONFIG_LGE_DISPLAY_MH),y)
-mdss-dsi-objs += lge_mh/lge_mdss_dsi_mh.o
-endif
+
 
 mdss-dsi-objs += msm_mdss_io_8974.o
 mdss-dsi-objs += mdss_dsi_phy.o

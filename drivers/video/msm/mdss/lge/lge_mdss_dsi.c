@@ -41,17 +41,16 @@ static int lge_mdss_dsi_parse_clk_params(struct platform_device *ctrl_pdev,
         struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 {
 	int rc;
-	u32 tmp;
 
-	rc = of_property_read_u32(ctrl_pdev->dev.of_node, "lge,esc-clk-rate", &tmp);
-	if (rc) {
-		pr_info("%s: esc-clk-rate not specified\n", __func__);
-	} else {
-		ctrl_pdata->lge_extra.esc_clk_rate = tmp;
-		pr_info("%s: esc-clk-rate=%d\n", __func__, ctrl_pdata->lge_extra.esc_clk_rate);
-	}
+	rc = of_property_read_u32(ctrl_pdev->dev.of_node, "lge,xo-clk-rate", &(ctrl_pdata->lge_extra.xo_clk_rate));
+        if (rc) {
+                pr_info("%s: xo-clk-rate not specified\n", __func__);
+                ctrl_pdata->lge_extra.xo_clk_rate = 0;
+        } else {
+                pr_info("%s: xo-clk-rate=%d\n", __func__, ctrl_pdata->lge_extra.xo_clk_rate);
+        }
 
-	return 0;
+        return 0;
 }
 
 int lge_mdss_dsi_parse_extra_params(struct platform_device *ctrl_pdev,

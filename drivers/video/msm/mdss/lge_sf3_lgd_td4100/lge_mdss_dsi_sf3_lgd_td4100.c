@@ -13,12 +13,11 @@
 
 extern void mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl, struct dsi_panel_cmds *pcmds, u32 flags);
 extern int mdss_dsi_parse_dcs_cmds(struct device_node *np, struct dsi_panel_cmds *pcmds, char *cmd_key, char *link_key);
-/* touch irq handle according to display power down in mfts (sf3) */
-extern bool mfts_check_shutdown;
 
 #if IS_ENABLED(CONFIG_LGE_DISPLAY_OVERRIDE_MDSS_DSI_PANEL_POWER_ON) || IS_ENABLED(CONFIG_LGE_DISPLAY_OVERRIDE_MDSS_DSI_PANEL_POWER_OFF)
 int mdss_dsi_pinctrl_set_state(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
 					bool active);
+
 
 #define IOVCC_POST 0
 #define RESET_POST 1
@@ -255,7 +254,6 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 		lge_set_panel_recovery_flag(0);
 	} else {
 		if (lge_mdss_dsi_panel_power_seq_all()) {
-			mfts_check_shutdown = true; /* Variable that can only used sf3 */
 			pr_info("%s: turn panel power off\n", __func__);
 
 #if IS_ENABLED(CONFIG_LGE_DISPLAY_SM5107_DSV)

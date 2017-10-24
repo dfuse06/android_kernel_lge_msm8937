@@ -59,14 +59,6 @@ int lge_mdss_panel_parse_dt_extra(struct device_node *np,
 	rc = of_property_read_u32(np, "lge,pre-bl-on-delay", &tmp);
 	ctrl_pdata->lge_extra.pre_bl_on_delay = (!rc ? tmp : 0);
 
-	rc = of_property_read_u32(np, "lge,esc-clk-rate", &tmp);
-	if (rc) {
-		pr_info("%s: esc-clk-rate not specified\n", __func__);
-	} else {
-		ctrl_pdata->lge_extra.esc_clk_rate = tmp;
-		pr_info("%s: esc-clk-rate=%d\n", __func__, ctrl_pdata->lge_extra.esc_clk_rate);
-	}
-
 	parse_dt_extra_dcs_cmds(np, ctrl_pdata);
 
 	return 0;
@@ -141,13 +133,5 @@ error:
 		if (pinfo->blmap[i])
 			kfree(pinfo->blmap[i]);
 	kfree(array);
-}
-#endif
-
-#if defined(CONFIG_LGE_DISPLAY_DAYLIGHT_MODE)
-__weak int lge_mdss_dsi_set_daylight_mode(struct mdss_dsi_ctrl_pdata *ctrl, int mode)
-{
-	pr_err("%s is not implemented.\n", __func__);
-	return 0;
 }
 #endif
